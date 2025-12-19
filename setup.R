@@ -37,6 +37,9 @@ suppressPackageStartupMessages({
   for (package in names(packages$GITHUB)) library(package, character.only = TRUE)
 })
 
+# this is a hack because one of these packages is overriding the dplyr::slice method
+slice <- dplyr::slice
+
 # Next we check the 'functions' directory for ".R" files and source those
 for (f in list.files("functions", pattern = glob2rx("*.R"), full.names = TRUE)) {
   source(f, echo = FALSE)

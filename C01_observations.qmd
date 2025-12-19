@@ -119,8 +119,7 @@ obs |>
   browse_obis()
 ```
 
-OK, that seems like a legitimate source, and nd it is possible, *Mola mola* can congregate for feeding, mating and possibly for karaoke parties. 
-
+OK, that seems like a legitimate source, and and it is possible, *Mola mola* can congregate for feeding, mating and possibly for karaoke parties. 
 
 
 ## `year`
