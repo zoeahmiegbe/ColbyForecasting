@@ -131,7 +131,7 @@ forecasts, to understanding the complexities of forecasts’ impacts.
 
 - Reading assignment for next time: TBD
 
-## Monday Jan 23
+## Monday Jan 19
 
 No class, [Dr. Martin Luther King
 Day](https://en.wikipedia.org/wiki/Martin_Luther_King_Jr._Day)
@@ -144,13 +144,19 @@ Day](https://en.wikipedia.org/wiki/Martin_Luther_King_Jr._Day)
 - Reading assignment for next time: [Hobday
   2020](https://github.com/BigelowLab/ColbyForecasting/blob/main/reading/Hobday2020.pdf)
 
-## 7. Mon Jan 26
+## 7. Thursday Jan 22
+
+ - TBD
+
+## 8. Monday Jan 26
 
 - Making your own [Markdown documents](https://rmarkdown.rstudio.com/)
 
 - R Tutorial: Additional time for project help
 
-## 8. Tuesday Jan 27 [Project presentations](https://github.com/BigelowLab/ColbyForecasting/blob/main/assignments/presentation.md)
+## 9. Tuesday Jan 27 
+
+[Project presentations](https://github.com/BigelowLab/ColbyForecasting/blob/main/assignments/presentation.md)
 
 We will have a mini scientific conference where you will present your
 project as you might do at a scientific conference. Plan your
@@ -164,7 +170,7 @@ discussion that attempts to bring this collection of projects together
 into an integrated description of what the Gulf of Maine might look like
 in future decades.
 
-## 9. Thursday Jan 29
+## 10. Thursday Jan 29
 
 - Continuation of presentations.
 
