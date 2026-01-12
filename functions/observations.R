@@ -1,5 +1,5 @@
 
-read_observations = function(scientificname = "Mola mola",
+read_observations = function(scientificname = "Doryteuthis pealeii",
                              minimum_year = 1970, 
                              ...){
   
@@ -18,10 +18,19 @@ read_observations = function(scientificname = "Mola mola",
     dplyr::mutate(month = factor(month, levels = month.abb))
   
   # if the user provided a non-NULL filter by year
-  if (!is.null(minimum_year)){
-    x = x |>
-      filter(year >= minimum_year)
+  if (!is.null(minimum_year)) {
+    x <- x |> filter(year >= minimum_year)
+    x <- x |> filter(!is.na(eventDate))
+    x <- x |> filter(!is.na(individualCount))
   }
+  
+  #Geometry
+  
+  db_mask <- brickman_database() |> filter(scenario == "STATIC", var == "mask")
+  mask <- read_brickman(db_mask)
+  hitOrMiss <- extract_brickman(mask, x)
+  x <- x |> filter(!is.na(hitOrMiss$value))
+  
   
   return(x)
 }
