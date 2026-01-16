@@ -36,5 +36,3 @@ ggplot(data = x,
         labs(y = "Sea Surface Temperature (C)",
         title = "Monthly SST at Buoy M01 (RCP4.5, 2055)"
        )
-
-ggsave("images/M01_SST_RCP45_2055.png")
