@@ -1,0 +1,231 @@
+---
+title: "My Second Species"   #change later
+output: github_document
+---
+
+```{r knit, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+###### Zoe Ahmiegbe
+
+## Picking My Second Species
+I picked the short fin squid *Illex illecebrosus* as a complementary species to the longfin squid.
+
+### Steps
+*Setup* : I will retrieve its data sets from OBIS and provide a summary.
+
+```{r setup, include=FALSE}
+source("/home/zeahmi28/ColbyForecasting/setup.R")
+```
+
+#### Reading in the Covariates
+
+I'll read in the Brickman database, then filter two different subsets to read.
+
+```{r read_brickman, include=FALSE}
+db = brickman_database() |>
+  dplyr::filter(scenario == "PRESENT", interval == "mon")
+present = read_brickman(db)
+```
+
+```{r read_mask, include=FALSE}
+ db = brickman_database() |>
+  dplyr::filter(scenario == "STATIC", interval == "static", var == "mask")
+
+mask = read_brickman(db)
+mask
+
+coast = read_coastline()
+
+```
+
+
+```{r read_obis, include=FALSE}
+SPECIES = "Illex illecebrosus"
+obs = read_obis(SPECIES)
+#obs
+```
+
+```{r all_counts, include=FALSE}
+LON0 = -67
+LAT0 = 46
+all_counts = count(st_drop_geometry(obs), month) # counting is faster without spatial baggage
+
+nback_avg = mean(all_counts$n) |>
+  round()
+nback_avg
+```
+
+```{r plot_all_obs, echo=FALSE}
+ggplot() +
+  geom_sf(data = obs, alpha = 0.2, shape = "circle small", size = 1) +
+  geom_sf(data = coast, col = "orange") +
+  geom_text(data = all_counts,
+            mapping = aes(x = LON0, 
+                          y = LAT0, 
+                          label = sprintf("n: %i", .data$n)),
+                          size = 3) + 
+  labs(x = "Longitude", y = "Latitude", title = "All observations") +
+  facet_wrap(~month)
+```
+
+
+I have 31,996 records for the shortfin squid before filtering the OBIS data set.
+```{r dim, include=FALSE}
+dim_start = dim(obs)
+dim_start
+```
+
+To investigate where these observations came from, I will run the basisOfRecord function. At a glance, I can see that most observations are made by humans!
+
+```{r basis, include=FALSE}
+obs |> count(basisOfRecord)
+```
+
+#### Filtering the Observations
+I will filter my data to get rid of occurences where eventDate is NA, or the data is earlier than my minimum year. I also modified my read_observations function so the user has more control when deciding which NA's to remove (drop_na).
+
+```{r filter, echo=TRUE}
+obs <- read_observations(
+  scientificname = "Illex illecebrosus",
+  minimum_year = 1960,
+  drop_na = c("individualCount", "eventDate")
+)
+```
+After filtering, I have 7,100 records left which is a stark difference compared to the original set of about 30,000 records.
+
+#### Reading Model Input
+I have prepared  a model input for "Illex illecebrosus", by thinning observations and selecting background points. I thinned the data so that some areas didn’t have way more observations than others. This helps prevent biased results caused by sampling the same locations too often.
+
+#### Thinning Observations
+```{r thin_observations, include=FALSE}
+  thinned_obs = sapply(month.abb,
+               function(mon){ 
+                 thin_by_cell(obs |> filter(month == mon), mask)
+               }, simplify = FALSE) |>
+  dplyr::bind_rows() 
+
+# another count
+thinned_counts = count(st_drop_geometry(thinned_obs), month)
+thinned_counts
+```
+
+After thinning my observations, my observation map now looks like this:
+
+```{r thin, echo=FALSE}
+
+ggplot() +
+  geom_sf(data = thinned_obs, 
+          alpha = 0.2, 
+          shape = "circle small", 
+          size = 1) +
+  geom_sf(data = coast, col = "orange") +
+  geom_text(data = thinned_counts,
+            mapping = aes(x = LON0, 
+                          y = LAT0, 
+                          label = sprintf("n: %i", .data$n)),
+                          size = 3) + 
+  labs(x = "Longitude", y = "Latitude", title = "Thinned observations") +
+  facet_wrap(~month)
+  
+```
+
+
+
+#### Random Sampling
+Following Instructor Ben's advice (thank you!), I used random background sampling because the observations were well-spaced and survey effort consistent, making a bias map unnecessary. My understanding is that the bias map could misinterpret the actual spatial distribution of the observations.
+
+```{r random_sampling, echo=TRUE}
+
+obsbkg = sapply(month.abb,
+    function(mon){ 
+      sample_background(thinned_obs |> filter(month == mon), # <- just this month
+                       mask,
+                       method = "random",  
+                       return_pres = TRUE, # <-- give me the obs back, too
+                       n = nback_avg) |>   # <-- how many points
+        mutate(month = mon, .before = 1)
+    }, simplify = FALSE) |>
+  bind_rows() |>
+  mutate(month = factor(month, levels = month.abb))
+#obsbkg 
+
+
+```
+
+
+```{r plot_ran_sampling, echo=FALSE}
+  ggplot() +
+  geom_sf(data = obsbkg, 
+          mapping = aes(col = class),
+          alpha =  0.4, shape = "circle small", size = 1) +
+  geom_sf(data = coast, col = "orange")  + 
+  labs(x = "Longitude", y = "Latitude", title = "All") +   
+  theme_bw() +  # <- make a simple white background
+  scale_fill_okabe_ito() +  # <-- colorblind friendly for N Record
+  facet_wrap(~month)
+```
+
+
+```{r save_model_input, include=FALSE}
+write_model_input(obsbkg, scientificname = "Illex illecebrosus")
+
+```
+
+```{r read_model_input, include=FALSE}
+model_input = read_model_input(scientificname = "Illex illecebrosus")
+model_input
+```
+
+
+
+#### A `pairs` plot
+
+It reveals the relationships among the variables pair-by-pair.  
+
+```{r pairs, echo=FALSE}
+pairs(present)
+```
+
+I set my cutoff mark for the filter_collinear to 0.90 so I could keep all variables.
+```{r keep_vars, include=FALSE}
+keep = filter_collinear(present, method = "cor_caret", cutoff = 0.90)
+keep = c("depth", "month", keep)
+keep
+```
+
+#### Extracting Data Variables from Covariates
+```{r extract_vars, include=FALSE}
+variables = extract_brickman(present, model_input, form = "wide")
+variables = variables |>
+  mutate(class = model_input$class) |>    
+  select(-.id)                            
+variables
+```
+
+
+###### Comparing Variables for Presence and Background
+The plot below shows the comparison between the variables for each class: presence and background. For some variables like U and V, they are mirror images of each other. However, there is more variability with variables like MLD (mixed layer depth) and Tbtm. Such variables would be more interesting to explore in models and are important to take note of.
+
+```{r plot_pres_vs_bg, echo=FALSE}
+plot_pres_vs_bg(variables |> select(-month), "class")
+```
+
+
+#### Let's Make a Configuration File
+
+I made a configuration file that stores the version identifier, species name, the background selection scheme and the names of the variables to model with. Configuration files are simply a useful way to store information about the choices we make!
+For my second species (Illex illecebrosus), its configuration file can be found in my models folder.
+
+Thank you!
+
+```{r make_config, include=FALSE}
+cfg = list(
+  version = "v2",
+  scientificname = "Illex illecebrosus",
+  background = "Average of observations per month",
+  keep_vars =  keep)
+
+write_configuration(cfg)      
+write_model_input(variables, scientificname = "Illex illecebrosus", version = "v2")
+```

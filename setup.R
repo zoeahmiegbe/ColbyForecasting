@@ -42,9 +42,14 @@ suppressPackageStartupMessages({
 slice <- dplyr::slice
 
 # Next we check the 'functions' directory for ".R" files and source those
-for (f in list.files("functions", pattern = glob2rx("*.R"), full.names = TRUE)) {
+#for (f in list.files("functions", pattern = glob2rx("*.R"), full.names = TRUE)) {
+  #source(f, echo = FALSE)
+#}
+
+for (f in list.files("/home/zeahmi28/ColbyForecasting/functions", pattern = glob2rx("*.R"), full.names = TRUE)) {
   source(f, echo = FALSE)
 }
+
 
 # Finally set path to the data hopefully as a sibling to the project directory
 # The data directory has top level subdirectories ("buoys", "coast", "brickman")

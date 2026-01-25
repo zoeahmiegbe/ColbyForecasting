@@ -1,6 +1,7 @@
 
 read_observations = function(scientificname = "Doryteuthis pealeii",
                              minimum_year = 1970, 
+                             drop_na= c("eventDate","individualCount"),
                              ...){
   
   #' Read raw OBIS data and then filter it
@@ -20,8 +21,14 @@ read_observations = function(scientificname = "Doryteuthis pealeii",
   # if the user provided a non-NULL filter by year
   if (!is.null(minimum_year)) {
     x <- x |> filter(year >= minimum_year)
-    x <- x |> filter(!is.na(eventDate))
-    x <- x |> filter(!is.na(individualCount))
+  }
+  
+  # Optional NA removal by column name
+  #similar to log_me in read_brickman()
+  if(!is.null(drop_na)) {
+    for(col in drop_na) {
+      x <- x |> filter(!is.na(.data[[col]]))
+    }
   }
   
   #Geometry
