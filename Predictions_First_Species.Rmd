@@ -1,0 +1,191 @@
+---
+title: "Predictions for My First Species"
+output: github_document
+---
+
+```{r knit, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+source("setup.R")
+```
+###### Zoe Ahmiegbe
+
+## Introduction
+For my first species, the longfin inshore squid, I will provide predictions of its presence under different scenarios (RCP 4.5 and RCP 8.5) for the present, 2055 and 2075.
+
+RCP 45: This is an intermediate scenario where effective action is taken to reduce greenhouse gases, causing global emissions to peak around 2040 and then stabilize.
+
+RCP 85: This is the "worst-case" scenario (often called "business as usual") where emissions continue to rise unchecked through the end of the century because no significant climate action is taken.
+
+### Nowcast: Present Time Period + Current Scenario
+This section provides a nowcast (predictions about the present) according to the current climate conditions.
+
+I will load in my Brickman data first and then read in my model fits from my previous exploration.
+```{r load_covar, include=FALSE}
+cfg = read_configuration(scientificname = "Doryteuthis pealeii",
+                         version = "v2", 
+                         path = data_path("models"))
+db = brickman_database()
+db = brickman_database()
+present_conditions = read_brickman(db |> filter(scenario == "PRESENT", 
+                                                interval == "mon"),
+                       add = c("depth", "month")) |>
+  select(all_of(cfg$keep_vars))
+```
+
+```{r mod_fits, include=FALSE}
+model_fits = read_model_fit(filename = "Doryteuthis pealeii-v1-model_fits")
+model_fits
+```
+
+```{r nowcast,include=FALSE }
+nowcast = predict_stars(model_fits, present_conditions)
+nowcast
+```
+Now we can plot what is often called a "habitat suitability index" (hsi) map. I'll use the boosted tree model.
+
+```{r plot_nowcast_maxent, warning = FALSE, echo=FALSE}
+plot_prediction(nowcast['default_btree'])+ ggtitle("Year 2025 - Current")
+```
+
+This is a presence/absence map with a threshold of 0.5, meaning that a presence means the prediction was greater than 0.5. Using a higher threshold would probably provide more accurate results.
+
+```{r plot_class_labels_current, warning = FALSE, echo=FALSE}
+pa_nowcast = threshold_prediction(nowcast)
+plot_prediction(pa_nowcast['default_btree'])
+```
+
+## Forecasting
+
+### Year 2055
+
+#### Year 2055 + Scenario RCP45
+Let's try forecasting under RCP45 conditions in 2055.  First we load those parameters, then run the prediction and plot.
+
+```{r load_2055_RCP45, warning = FALSE, include=FALSE}
+covars_rcp45_2055 = read_brickman(db |> filter(scenario == "RCP45", 
+                                               year == 2055, 
+                                               interval == "mon"),
+                                  add = c("depth", "month")) |>
+  select(all_of(cfg$keep_vars))
+```
+
+```{r forecast_2055_RCP45, include=FALSE}
+forecast_2055_RCP45 = predict_stars(model_fits, covars_rcp45_2055)
+forecast_2055_RCP45
+```
+Plotting the prediction for Year 2055 with scenario RCP45:
+
+
+```{r plot_forecast_2055_RCP45, echo=FALSE}
+plot_prediction(forecast_2055_RCP45['default_btree']) + ggtitle("Year 2055- RCP 4.5")
+```
+
+#### Year 2055 + Scenario RCP85
+Let's try forecasting under RCP85 conditions in 2055.  First we load those parameters, then run the prediction and plot.
+
+```{r load_2055_RCP85, warning = FALSE, include=FALSE}
+covars_rcp85_2055 = read_brickman(db |> filter(scenario == "RCP85", 
+                                               year == 2055, 
+                                               interval == "mon"),
+                                  add = c("depth", "month")) |>
+  select(all_of(cfg$keep_vars))
+```
+
+```{r forecast_2055_RCP85, echo=FALSE}
+forecast_2055_RCP85 = predict_stars(model_fits, covars_rcp85_2055)
+forecast_2055_RCP85
+```
+Plotting the prediction for Year 2055 with scenario RCP85:
+```{r plot_forecast_2055_RCP85, echo=FALSE}
+plot_prediction(forecast_2055_RCP85['default_btree']) + ggtitle("Year 2055- RCP 8.5")
+```
+
+### Year 2075 + Scenario RCP45
+Predictions for year 2075 under RCP45 are presented here:
+
+```{r load_2075_RCP45, warning = FALSE}
+covars_rcp45_2075 = read_brickman(db |> filter(scenario == "RCP45", 
+                                               year == 2075, 
+                                               interval == "mon"),
+                                  add = c("depth", "month")) |>
+  select(all_of(cfg$keep_vars))
+```
+
+```{r forecast_2075_RCP45}
+forecast_2075_RCP45 = predict_stars(model_fits, covars_rcp45_2075)
+forecast_2075_RCP45
+```
+
+```{r plot_forecast_2075_RCP45, warning = FALSE}
+plot_prediction(forecast_2075_RCP45['default_btree']) + ggtitle("Year 2075- RCP 4.5")
+```
+
+
+### Year 2075 + Scenario RCP85
+Predictions for year 2075 under RCP85 are presented here:
+
+
+```{r load_2075_RCP85, warning = FALSE}
+covars_rcp85_2075 = read_brickman(db |> filter(scenario == "RCP85", 
+                                               year == 2075, 
+                                               interval == "mon"),
+                                  add = c("depth", "month")) |>
+  select(all_of(cfg$keep_vars))
+```
+
+```{r forecast_2075_RCP85}
+forecast_2075_RCP85 = predict_stars(model_fits, covars_rcp45_2075)
+forecast_2075_RCP85
+```
+
+```{r plot_forecast_2075_RCP85, warning = FALSE}
+plot_prediction(forecast_2075_RCP85['default_btree']) + ggtitle("Year 2075- RCP 8.5")
+```
+
+
+
+
+## Saving the Predictions
+
+It's easy to save the predictions (and read then back with `read_prediction()`).
+
+```{r save_pred}
+# make sure the output directory exists
+path = make_path("predictions")
+
+write_prediction(nowcast,
+                 scientificname = cfg$scientificname,
+                 version = cfg$version,
+                 year = "CURRENT",
+                 scenario = "CURRENT")
+
+# Year 2055
+write_prediction(forecast_2055_RCP45,
+                 scientificname = cfg$scientificname,
+                 version = cfg$version,
+                 year = "2055",
+                 scenario = "RCP45")
+
+write_prediction(forecast_2055_RCP85,
+                 scientificname = cfg$scientificname,
+                 version = cfg$version,
+                 year = "2055",
+                 scenario = "RCP85")
+
+# Year 2075
+write_prediction(forecast_2075_RCP45,
+                 scientificname = cfg$scientificname,
+                 version = cfg$version,
+                 year = "2075",
+                 scenario = "RCP45")
+
+write_prediction(forecast_2075_RCP85,
+                 scientificname = cfg$scientificname,
+                 version = cfg$version,
+                 year = "2075",
+                 scenario = "RCP85")
+```
+
